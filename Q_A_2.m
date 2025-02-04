@@ -1,87 +1,119 @@
-function segment_contacts(file_path, save_results)
-    % Load data
+function contact_peaks = segment_contacts(file_name, save_results)
+    % Load Data
+    folder_path = fullfile(pwd, 'PR_CW_mat');
+    file_path = fullfile(folder_path, file_name);
     data = load(file_path);
-    time = 1:size(data.ft_values,1); % Time index
+    
     normal_force = data.ft_values(:,3); % Assuming Fz (3rd column) is normal force
 
-    force_threshold = 2; % Define contact force threshold
+    force_threshold = 6;  % Absolute force threshold for contact detection
+    min_prominence = 4;   % Minimum peak prominence for findpeaks()
 
-    % Identify when force exceeds threshold (contact events)
+    % Identify contact start and end indices
     contact_mask = abs(normal_force) > force_threshold;
-
-    % Find start and end indices of each contact segment
     contact_segments = find_contact_segments(contact_mask);
 
-    % Initialize arrays for storing max force peaks
-    peak_values = [];
+    % If no contacts are found, return empty vector
+    if isempty(contact_segments)
+        disp('No significant contacts detected.');
+        contact_peaks = [];
+        return;
+    end
+
+    % Initialize empty arrays for peak indices and values
     peak_indices = [];
+    peak_values = [];
 
-    % Find max force in each segment
+    % Process each contact segment (ignoring short ones)
     for i = 1:size(contact_segments, 1)
         idx_range = contact_segments(i,1):contact_segments(i,2);
-        [max_force, max_idx] = max(abs(normal_force(idx_range))); % Get max within segment
-        peak_values(i) = max_force;
-        peak_indices(i) = idx_range(max_idx); % Convert to global time index
+        force_segment = normal_force(idx_range);
+        
+        % Ignore segments shorter than 10 samples
+        if length(force_segment) < 10
+            continue;
+        end
+
+        % Detect peaks in positive and negative forces
+        [pos_peaks, pos_locs] = findpeaks(force_segment, 'MinPeakProminence', min_prominence);
+        [neg_peaks, neg_locs] = findpeaks(-force_segment, 'MinPeakProminence', min_prominence);
+
+        % Combine positive and negative peaks
+        all_peaks = [pos_peaks, -neg_peaks];  
+        all_locs = [pos_locs, neg_locs];      
+
+        if ~isempty(all_peaks)
+            % Find the most prominent peak (largest force magnitude)
+            [~, max_idx] = max(abs(all_peaks)); 
+            peak_values(end+1) = all_peaks(max_idx); % Keep original sign
+            peak_indices(end+1) = idx_range(all_locs(max_idx)); % Convert to global index
+        else
+            % No prominent peaks detected, default to max force in segment
+            [max_force, rel_idx] = max(abs(force_segment));
+            peak_values(end+1) = force_segment(rel_idx); % Preserve sign
+            peak_indices(end+1) = idx_range(rel_idx);
+        end
     end
 
-    % Plot force data with peaks marked
-    figure('Position', [100, 100, 1500, 600]);
-    plot(time, normal_force, 'b', 'LineWidth', 1); hold on;
-    plot(peak_indices, peak_values, 'ro', 'MarkerSize', 8, 'MarkerFaceColor', 'r'); % Mark peaks
+    % Convert to column vectors
+    peak_indices = peak_indices(:);
+    peak_values = peak_values(:);
 
-    % Highlight contact segments
-    for i = 1:size(contact_segments, 1)
-        idx_range = contact_segments(i,1):contact_segments(i,2);
-        plot(idx_range, normal_force(idx_range), 'r', 'LineWidth', 2);
-    end
-
-    % Formatting
-    xlabel('Time Index', 'FontSize', 12);
-    ylabel('Normal Force (N)', 'FontSize', 12);
-    title(['Segmented Contact Events with Max Force Peaks - ', file_path], 'Interpreter', 'none', 'FontSize', 14);
-    legend('Normal Force', 'Detected Peaks');
-    grid on;
-
-    % Display peak indices
-    disp('Detected Max Force Peaks at Indices:');
-    disp(peak_indices);
-
-    % Save peaks and indices (for 2b)
+    % Save peaks and indices if requested
     if save_results
-        save('contact_peaks.mat', 'peak_values', 'peak_indices');
+        save('contact_peaks.mat', 'peak_indices', 'peak_values');
     end
 
-    % Extract tactile sensor data (for 2c)
-    extract_contact_data(file_path, peak_indices, save_results);
+    % Return only peak indices
+    contact_peaks = peak_indices;
 end
 
 %% **Helper Function to Find Contact Segments**
 function segments = find_contact_segments(contact_mask)
-    % Identify start and end of each contact period
-    contact_diff = diff([0; contact_mask; 0]); % Add 0 at start & end for boundary detection
-    contact_starts = find(contact_diff == 1); % Find rising edges
-    contact_ends = find(contact_diff == -1) - 1; % Find falling edges
+    segments = [];
+    in_contact = false;
+    start_idx = 0;
 
-    % Combine into a matrix [start_idx, end_idx]
-    segments = [contact_starts, contact_ends];
-end
+    for i = 1:length(contact_mask)
+        if ~in_contact && contact_mask(i)
+            start_idx = i; % Start of a contact
+            in_contact = true;
+        elseif in_contact && ~contact_mask(i)
+            segments = [segments; start_idx, i-1]; % Store segment
+            in_contact = false;
+        end
+    end
 
-%% **Function to Extract Tactile Sensor Data for 2c**
-function extract_contact_data(file_path, peak_indices, save_results)
-    % Load data
-    data = load(file_path);
-
-    % Extract force and displacement data at peak indices
-    force_data_at_peaks = data.sensor_matrices_force(peak_indices, :);
-    displacement_data_at_peaks = data.sensor_matrices_displacement(peak_indices, :);
-    torque_data_at_peaks = data.ft_values(peak_indices, :); % Full force/torque data
-
-    % Display extracted data size
-    disp('Extracted Force Data Size:'), disp(size(force_data_at_peaks));
-    disp('Extracted Displacement Data Size:'), disp(size(displacement_data_at_peaks));
-
-    % Save extracted data
-    if save_results
-        save('contact_sensor_data.mat', 'force_data_at_peaks', 'displacement_data_at_peaks', 'torque_data_at_peaks');
+    % If a contact was still active at the end, close the segment
+    if in_contact
+        segments = [segments; start_idx, length(contact_mask)];
     end
 end
+
+
+function extract_sensor_at_peaks(file_name, contact_peaks)
+    folder_path = fullfile(pwd, 'PR_CW_mat');
+    file_path = fullfile(folder_path, file_name);
+    data = load(file_path);
+    ft_values = data.ft_values;
+    displacement_values = data.sensor_matrices_displacement;
+    force_values = data.sensor_matrices_force;
+
+    ft_force_peaks = ft_values(contact_peaks, 1:3);
+    ft_torque_peaks = ft_values(contact_peaks, 4:6);
+
+    displacement_peaks = displacement_values(contact_peaks, :);
+
+    force_peaks = force_values(contact_peaks, :);
+
+    disp(ft_torque_peaks);
+    disp(length(ft_torque_peaks));
+end
+
+
+contact_peaks = segment_contacts("hexagon_rubber_papillarray_single.mat", false);
+disp(contact_peaks);
+extract_sensor_at_peaks("hexagon_rubber_papillarray_single.mat", contact_peaks)
+
+
+
