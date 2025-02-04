@@ -9,10 +9,10 @@ function plot_trajectories(shapes, materials)
     % files, extracting the end effector pose and force data, and generating
     % clear, readable plots.
 
-    % Define the folder containing .mat files
+    % Data folder
     folder_path = fullfile(pwd, 'PR_CW_mat');
 
-    % Initialize an empty list for selected files
+    % empty list for selected files
     selected_files = {};
 
     % Generate filenames dynamically based on shapes and materials
@@ -75,7 +75,7 @@ function plot_position_over_time(time, poses, file_name)
 
     for i = 1:3
         subplot(3,1,i);
-        plot(time, poses(:,i), colors{i}, 'LineWidth', 1);
+        plot(time, poses(:,i), colors{i}, 'LineWidth', 0.6);
         xlabel('Time (index)', 'FontSize', 12);
         ylabel(labels{i}, 'FontSize', 12);
         title([labels{i}, ' Over Time - ', file_name], 'Interpreter', 'none', 'FontSize', 14);
@@ -91,7 +91,7 @@ function plot_orientation_over_time(time, poses, file_name)
 
     for i = 4:6
         subplot(3,1,i-3);
-        plot(time, poses(:,i), colors{i-3}, 'LineWidth', 1);
+        plot(time, poses(:,i), colors{i-3}, 'LineWidth', 0.6);
         xlabel('Time (index)', 'FontSize', 12);
         ylabel([labels{i-3}, ' (°)'], 'FontSize', 12);
         title([labels{i-3}, ' Over Time - ', file_name], 'Interpreter', 'none', 'FontSize', 14);
@@ -107,7 +107,7 @@ function plot_force_over_time(time, ft_values, file_name)
 
     for i = 1:3
         subplot(3,1,i);
-        plot(time, ft_values(:,i), colors{i}, 'LineWidth', 1);
+        plot(time, ft_values(:,i), colors{i}, 'LineWidth', 0.6);
         xlabel('Time (index)', 'FontSize', 12);
         ylabel(labels{i}, 'FontSize', 12);
         title([labels{i}, ' - ', file_name], 'Interpreter', 'none', 'FontSize', 14);
