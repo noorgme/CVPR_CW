@@ -62,6 +62,8 @@ hold off;
 
 %%
 
+disp(latent)
+
 figure;
 hold on;
 
