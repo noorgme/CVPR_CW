@@ -4,10 +4,18 @@ clear; clc; close all;
 TPU_data = load("PR_CW_mat/oblong_TPU_papillarray_single.mat");
 rubber_data = load("PR_CW_mat/oblong_rubber_papillarray_single.mat");
 
-% Extract force values of central papillae
+%% extract segment indicies
+
+TPU_segments = load("contact_segments/contact_peaks_cylinder_TPU_papillarray_single.mat");
+rubber_segments = load("contact_segments/contact_peaks_cylinder_rubber_papillarray_single.mat");
+
+TPU_segments = TPU_segments.peak_indices;
+rubber_segments = rubber_segments.peak_indices;
+
+%% Extract displacement values of central papillae
 pap_number = 4; 
-TPU_force = TPU_data.sensor_matrices_displacement(:, (pap_number * 3) + (1:3));
-rubber_force = rubber_data.sensor_matrices_displacement(:, (pap_number * 3) + (1:3));
+TPU_force = TPU_data.sensor_matrices_displacement(TPU_segments, (pap_number * 3) + (1:3));
+rubber_force = rubber_data.sensor_matrices_displacement(rubber_segments, (pap_number * 3) + (1:3));
 
 % Combine data
 all_data = [TPU_force; rubber_force]; % Stack TPU & Rubber together

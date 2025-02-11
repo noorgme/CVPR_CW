@@ -63,7 +63,7 @@ function contact_peaks = segment_contacts(file_name, save_results)
     if save_results
         base_name = char(strrep(file_name, '.mat', ''));
         save(['contact_segments/contact_peaks_' base_name '.mat'], 'peak_indices', 'peak_values');
-        save(['contact_segments/contact_peaks_' base_name '.mat'], 'contact_segments');
+        %save(['contact_segments/contact_segments_' base_name '.mat'], 'contact_segments');
     end
 
     % Return only peak indices

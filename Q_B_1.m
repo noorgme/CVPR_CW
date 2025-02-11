@@ -4,13 +4,23 @@ normal_data = load("PR_CW_mat/cylinder_papillarray_single.mat");
 TPU_data = load("PR_CW_mat/cylinder_TPU_papillarray_single.mat");
 rubber_data = load("PR_CW_mat/cylinder_rubber_papillarray_single.mat");
 
+%% extract segment indicies
+
+normal_segments = load("contact_segments/contact_peaks_cylinder_papillarray_single.mat");
+TPU_segments = load("contact_segments/contact_peaks_cylinder_TPU_papillarray_single.mat");
+rubber_segments = load("contact_segments/contact_peaks_cylinder_rubber_papillarray_single.mat");
+
+normal_segments = normal_segments.peak_indices;
+TPU_segments = TPU_segments.peak_indices;
+rubber_segments = rubber_segments.peak_indices;
+
 %% Extract force values of middle papilae
 
 pap_number = 4;
 
-normal_force = normal_data.sensor_matrices_force(:, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
-TPU_force = TPU_data.sensor_matrices_force(:, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
-rubber_force = rubber_data.sensor_matrices_force(:, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
+normal_force = normal_data.sensor_matrices_force(normal_segments, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
+TPU_force = TPU_data.sensor_matrices_force(TPU_segments, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
+rubber_force = rubber_data.sensor_matrices_force(rubber_segments, (pap_number * 3) + 1 : ((pap_number * 3) + 2) + 1);
 
 %% Combine data for PCA
 all_data = [normal_force; TPU_force; rubber_force]; % Stack all datasets together
