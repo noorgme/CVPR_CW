@@ -57,7 +57,7 @@ function contact_peaks = segment_contacts(file_name, save_results)
 
     % Convert to column vectors
     peak_indices = peak_indices(:);
-    peak_values = peak_values(:);
+    peak_values = -peak_values(:); % flip from negatives
 
     % Save peaks and indices if requested
     if save_results
