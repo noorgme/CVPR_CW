@@ -61,7 +61,9 @@ function contact_peaks = segment_contacts(file_name, save_results)
 
     % Save peaks and indices if requested
     if save_results
-        save('contact_peaks.mat', 'peak_indices', 'peak_values');
+        base_name = char(strrep(file_name, '.mat', ''));
+        save(['contact_segments/contact_peaks_' base_name '.mat'], 'peak_indices', 'peak_values');
+        save(['contact_segments/contact_peaks_' base_name '.mat'], 'contact_segments');
     end
 
     % Return only peak indices
@@ -110,10 +112,35 @@ function extract_sensor_at_peaks(file_name, contact_peaks)
     disp(length(ft_torque_peaks));
 end
 
+% Define folder containing .mat files
+folder_path = fullfile(pwd, 'PR_CW_mat');
 
-contact_peaks = segment_contacts("hexagon_rubber_papillarray_single.mat", false);
-disp(contact_peaks);
-extract_sensor_at_peaks("hexagon_rubber_papillarray_single.mat", contact_peaks)
+% Get list of all .mat files in the folder
+file_list = dir(fullfile(folder_path, '*.mat'));
 
+% Ensure output directory exists
+output_folder = fullfile(pwd, 'contact_segments');
+if ~exist(output_folder, 'dir')
+    mkdir(output_folder);
+end
+
+% Loop through each .mat file and process it
+for i = 1:length(file_list)
+    file_name = file_list(i).name;
+    
+    fprintf('Processing file: %s\n', file_name);
+    
+    % Run segmentation function
+    contact_peaks = segment_contacts(file_name, true);
+    
+    % If peaks were detected, extract sensor values at peaks
+    if ~isempty(contact_peaks)
+        extract_sensor_at_peaks(file_name, contact_peaks);
+    else
+        fprintf('No significant contacts detected in %s\n', file_name);
+    end
+end
+
+fprintf('Processing complete for all files.\n');
 
 
