@@ -115,5 +115,67 @@ function plot_force_over_time(time, ft_values, file_name)
     end
 end
 
+function plot_3D_trajectories(shapes, materials)
+    % PLOT_3D_TRAJECTORIES: Plots 3D end effector trajectories for two shapes 
+    % and three materials in a single figure with six subplots.
+    %
+    % INPUT:
+    %   shapes - Cell array of two shape names (e.g., {'cylinder', 'hexagon'}).
+    %   materials - Cell array of three materials (e.g., {'TPU', 'rubber', 'papillarray'}).
+    %
+    % OUTPUT:
+    %   A single figure with six subplots, each showing the 3D trajectory of the end effector.
+    
+    if length(shapes) ~= 2 || length(materials) ~= 3
+        error('This function requires exactly two shapes and three materials.');
+    end
 
-plot_trajectories({'cylinder'}, {'PLA'});
+    % Data folder path
+    folder_path = fullfile(pwd, 'PR_CW_mat');
+
+    % Create figure
+    figure('Position', [100, 100, 1200, 800]);
+    
+    % Loop over shapes and materials
+    for i = 1:length(shapes)
+        shape = shapes{i};
+        for j = 1:length(materials)
+            material = materials{j};
+            
+            % Construct filename
+            if strcmp(material, 'PLA')
+                material_prefix = "";
+            else
+                material_prefix = sprintf('%s_', material);
+            end
+            file_name = sprintf('%s_%spapillarray_single.mat', shape, material_prefix);
+            file_path = fullfile(folder_path, file_name);
+            
+            % Load data
+            if exist(file_path, 'file')
+                data = load(file_path);
+                poses = data.end_effector_poses;  % Extract end effector positions
+
+                % Determine subplot index
+                subplot_idx = (i-1) * 3 + j;
+                
+                % Plot
+                subplot(2, 3, subplot_idx);
+                plot3(poses(:,1), poses(:,2), poses(:,3), 'b', 'LineWidth', 0.6);
+                xlabel('X Position', 'FontSize', 10);
+                ylabel('Y Position', 'FontSize', 10);
+                zlabel('Z Position', 'FontSize', 10);
+                title(sprintf('%s - %s', shape, material), 'Interpreter', 'none', 'FontSize', 12);
+                grid on; axis equal; view(3);
+            else
+                % Handle missing files
+                warning('File not found: %s', file_path);
+                subplot_idx = (i-1) * 3 + j;
+                subplot(2, 3, subplot_idx);
+                title(sprintf('Missing: %s - %s', shape, material), 'Interpreter', 'none', 'FontSize', 12);
+            end
+        end
+    end
+end
+
+plot_3D_trajectories({'cylinder', 'hexagon'}, {'PLA', 'rubber', 'TPU'});
