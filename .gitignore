@@ -1,1 +1,5 @@
 *.asv
+/contact_segments
+/PR_CW_mat
+contact_peaks.mat
+contact_segments.mat
