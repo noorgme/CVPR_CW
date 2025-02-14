@@ -25,6 +25,9 @@ rubber_disp = rubber_data.sensor_matrices_displacement(rubber_segments, (pap_num
 
 %% 📌 Combine Data & Labels
 all_data = [normal_disp; TPU_disp; rubber_disp]; % Concatenating all material data
+% Normalise before clustering (z-score norm) 
+all_data = (all_data - mean(all_data)) ./ std(all_data);
+
 labels = [ones(size(normal_disp,1),1); 2*ones(size(TPU_disp,1),1); 3*ones(size(rubber_disp,1),1)]; % 1: PLA, 2: TPU, 3: Rubber
 
 %% (a) Scatter Plot for the 3 Materials (3D)
@@ -33,8 +36,8 @@ scatter3(normal_disp(:,1), normal_disp(:,2), normal_disp(:,3), 20, 'r', 'filled'
 scatter3(TPU_disp(:,1), TPU_disp(:,2), TPU_disp(:,3), 20, 'g', 'filled');
 scatter3(rubber_disp(:,1), rubber_disp(:,2), rubber_disp(:,3), 20, 'b', 'filled');
 xlabel('D_X (mm)'); ylabel('D_Y (mm)'); zlabel('D_Z (mm)');
-title('3D Scatter Plot of Central Papillae Displacement');
-legend({'PLA', 'TPU', 'Rubber'}, 'Location', 'best');
+title('3D Scatter Plot of Central Papillae Displacement (Hexagon)');
+legend({'PLA', 'TPU', 'Rubber'}, 'Location', 'best', 'FontSize', 14, 'FontWeight', 'bold', 'Box', 'off', 'EdgeColor', 'k');
 grid on; view(45,30);
 hold off;
 
@@ -49,7 +52,7 @@ scatter3(all_data(idx==2,1), all_data(idx==2,2), all_data(idx==2,3), 20, 'g', 'f
 scatter3(all_data(idx==3,1), all_data(idx==3,2), all_data(idx==3,3), 20, 'b', 'filled');
 scatter3(C(:,1), C(:,2), C(:,3), 100, 'kx', 'LineWidth', 2); % Centroids
 xlabel('D_X (mm)'); ylabel('D_Y (mm)'); zlabel('D_Z (mm)');
-title('K-means Clustering in 3D');
+title('K-means Clustering in 3D for Hexagon Displacement Data - Euclidian Distance ');
 legend({'Cluster 1', 'Cluster 2', 'Cluster 3', 'Centroids'}, 'Location', 'best');
 grid on; view(45,30);
 hold off;
@@ -76,9 +79,9 @@ gscatter(all_data(:,2), all_data(:,3), idx, 'rgb', 'osd', 8);
 xlabel('D_Y (mm)'); ylabel('D_Z (mm)');
 title('Clusters: D_Y vs D_Z');
 
-%% (c) Apply K-means Clustering with a Different Distance Metric (City Block)
+%% (c) Apply K-means Clustering with a Different Distance Metric (Manhattan)
 opts = statset('MaxIter', 1000); % Ensure convergence
-[idx2, C2] = kmeans(all_data, k, 'Distance', 'cityblock', 'Options', opts); % Using city block distance
+[idx2, C2] = kmeans(all_data, k, 'Distance', 'cityblock', 'Options', opts); % Using Manhattan distance
 
 % 📌 3D Scatter Plot of New Clusters
 figure;
@@ -87,12 +90,12 @@ scatter3(all_data(idx2==2,1), all_data(idx2==2,2), all_data(idx2==2,3), 20, 'g',
 scatter3(all_data(idx2==3,1), all_data(idx2==3,2), all_data(idx2==3,3), 20, 'b', 'filled');
 scatter3(C2(:,1), C2(:,2), C2(:,3), 100, 'kx', 'LineWidth', 2); % Centroids
 xlabel('D_X (mm)'); ylabel('D_Y (mm)'); zlabel('D_Z (mm)');
-title('K-means Clustering with City Block Distance');
+title('K-means Clustering in 3D for Hexagon Displacement Data - Manhattan Distance ');
 legend({'Cluster 1', 'Cluster 2', 'Cluster 3', 'Centroids'}, 'Location', 'best');
 grid on; view(45,30);
 hold off;
 
-%% 📌 2D Projection of City Block Clustering
+%% 📌 2D Projection of Manhattan Clustering
 figure;
 tiledlayout(1,3, 'TileSpacing', 'compact');
 
@@ -100,16 +103,16 @@ tiledlayout(1,3, 'TileSpacing', 'compact');
 nexttile;
 gscatter(all_data(:,1), all_data(:,2), idx2, 'rgb', 'osd', 8);
 xlabel('D_X (mm)'); ylabel('D_Y (mm)');
-title('City Block Clusters: D_X vs D_Y');
+title('Manhattan Clusters: D_X vs D_Y');
 
 % D_X vs D_Z
 nexttile;
 gscatter(all_data(:,1), all_data(:,3), idx2, 'rgb', 'osd', 8);
 xlabel('D_X (mm)'); ylabel('D_Z (mm)');
-title('City Block Clusters: D_X vs D_Z');
+title('Manhattan Clusters: D_X vs D_Z');
 
 % D_Y vs D_Z
 nexttile;
 gscatter(all_data(:,2), all_data(:,3), idx2, 'rgb', 'osd', 8);
 xlabel('D_Y (mm)'); ylabel('D_Z (mm)');
-title('City Block Clusters: D_Y vs D_Z');
+title('Manhattan Clusters: D_Y vs D_Z');

@@ -239,7 +239,7 @@ end
 
 %% **Helper Function to Detect Contact Peaks**
 function [peak_indices, peak_values] = detect_contact_peaks(normal_force)
-    force_threshold = 6;  % Absolute force threshold for contact detection
+    force_threshold = 7;  % Absolute force threshold for contact detection
     min_prominence = 4;   % Minimum peak prominence for findpeaks()
 
     % Identify contact start and end indices
