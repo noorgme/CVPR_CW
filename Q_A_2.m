@@ -1,11 +1,11 @@
 function contact_peaks = segment_contacts(file_name, save_results)
-    % Load Data
+
     folder_path = fullfile(pwd, 'PR_CW_mat');
     file_path = fullfile(folder_path, file_name);
     data = load(file_path);
     
     normal_force = data.ft_values(:,3); % Assuming Fz (3rd column) is normal force
-    time = 1:length(normal_force); % Time index
+    time = 1:length(normal_force);
 
     force_threshold = 6;  % Absolute force threshold for contact detection
     min_prominence = 4;   % Minimum peak prominence for findpeaks()
@@ -21,7 +21,6 @@ function contact_peaks = segment_contacts(file_name, save_results)
         return;
     end
 
-    % Initialize empty arrays for peak indices and values
     peak_indices = [];
     peak_values = [];
 
@@ -35,11 +34,9 @@ function contact_peaks = segment_contacts(file_name, save_results)
             continue;
         end
 
-        % Detect peaks in positive and negative forces
         [pos_peaks, pos_locs] = findpeaks(force_segment, 'MinPeakProminence', min_prominence);
         [neg_peaks, neg_locs] = findpeaks(-force_segment, 'MinPeakProminence', min_prominence);
 
-        % Combine positive and negative peaks
         all_peaks = [pos_peaks, -neg_peaks];  
         all_locs = [pos_locs, neg_locs];      
 
@@ -56,37 +53,20 @@ function contact_peaks = segment_contacts(file_name, save_results)
         end
     end
 
-    % Convert to column vectors
     peak_indices = peak_indices(:);
-    peak_values = peak_values(:); % flip from negatives
+    peak_values = peak_values(:); % flip sign
 
     % Save peaks and indices if requested
     if save_results
         base_name = char(strrep(file_name, '.mat', ''));
         save(['contact_segments/contact_peaks_' base_name '.mat'], 'peak_indices', 'peak_values');
-    end
-
-    % 📌 **NEW: Plot Normal Force with Detected Peaks**
-    %{
-    figure;
-    plot(time, normal_force, 'b', 'LineWidth', 1); % Plot normal force
-    hold on;
-    scatter(peak_indices, peak_values, 60, 'r', 'filled'); % Mark detected peaks
-    xlabel('Time (Index)');
-    ylabel('Normal Force (N)');
-    title(['Normal Force & Detected Peaks - ', file_name], 'Interpreter', 'none');
-    grid on;
-    legend('Normal Force', 'Detected Peaks');
-    hold off;
-    %}
-    
+    end  
 
     % Return only peak indices
     contact_peaks = peak_indices;
 end
 
-
-%% **Helper Function to Find Contact Segments**
+%% Helper function to find contact segments
 function segments = find_contact_segments(contact_mask)
     segments = [];
     in_contact = false;
@@ -129,33 +109,25 @@ function extract_sensor_at_peaks(file_name, contact_peaks)
 end
 
 
+%% 
 
-
-
-
-% __MAIN__
-% Define folder containing .mat files
 folder_path = fullfile(pwd, 'PR_CW_mat');
 
-% Get list of all .mat files in the folder
 file_list = dir(fullfile(folder_path, '*.mat'));
 
-% Ensure output directory exists
 output_folder = fullfile(pwd, 'contact_segments');
 if ~exist(output_folder, 'dir')
     mkdir(output_folder);
 end
 
-% Loop through each .mat file and process it
+% Loop through each file and process it
 for i = 1:length(file_list)
     file_name = file_list(i).name;
     
     fprintf('Processing file: %s\n', file_name);
     
-    % Run segmentation function
     contact_peaks = segment_contacts(file_name, true);
     
-    % If peaks were detected, extract sensor values at peaks
     if ~isempty(contact_peaks)
         extract_sensor_at_peaks(file_name, contact_peaks);
     else
@@ -164,27 +136,15 @@ for i = 1:length(file_list)
 end
 
 function plot_all_contact_peaks(shapes, materials)
-    % PLOT_ALL_CONTACT_PEAKS: Professionally formatted figure with multiple subplots
-    % for normal force data with detected peaks across different shapes and materials.
-    %
-    % INPUT:
-    %   shapes - Cell array of shape names (e.g., {'cylinder', 'hexagon', 'oblong'}).
-    %   materials - Cell array of materials (e.g., {'PLA', 'rubber', 'TPU'}).
 
     folder_path = fullfile(pwd, 'PR_CW_mat');
     num_shapes = length(shapes);
     num_materials = length(materials);
     
-    % Create high-quality figure
     figure('Units', 'normalized', 'Position', [0.05, 0.05, 0.9, 0.8]); 
     tiledlayout(num_shapes, num_materials, 'TileSpacing', 'compact', 'Padding', 'compact'); % Compact layout
 
-    % Placeholder for legend handles
     h1 = []; h2 = [];
-
-    % Define color scheme
-    force_color = [0, 0.447, 0.741]; % MATLAB default blue
-    peak_color = [0.850, 0.325, 0.098]; % MATLAB default red
 
     for i = 1:num_shapes
         for j = 1:num_materials
@@ -213,10 +173,10 @@ function plot_all_contact_peaks(shapes, materials)
                 [peak_indices, peak_values] = detect_contact_peaks(normal_force);
 
                 % Plot normal force
-                h1 = plot(time, normal_force, 'Color', force_color, 'LineWidth', 1.2); 
+                h1 = plot(time, normal_force, 'Color', 'b', 'LineWidth', 1.2); 
                 hold on;
                 % Plot detected peaks
-                h2 = scatter(peak_indices, peak_values, 40, peak_color, 'filled'); 
+                h2 = scatter(peak_indices, peak_values, 40, 'r', 'filled'); 
 
                 xlabel('Time (Index)', 'FontSize', 14, 'FontWeight', 'bold');
                 ylabel('Normal Force (N)', 'FontSize', 14, 'FontWeight', 'bold');
@@ -230,17 +190,17 @@ function plot_all_contact_peaks(shapes, materials)
         end
     end
 
-    % 📌 Add a single legend outside the subplots
     if ~isempty(h1) && ~isempty(h2)
         l = legend([h1, h2], {'Normal Force', 'Detected Peaks'}, 'FontSize', 12, 'FontWeight', 'bold');
-        l.Layout.Tile = 'southoutside'; % Position the legend below the plots
+        l.Layout.Tile = 'southoutside'; 
     end
 end
 
-%% **Helper Function to Detect Contact Peaks**
+%% Helper function to detect contact peaks
+
 function [peak_indices, peak_values] = detect_contact_peaks(normal_force)
     force_threshold = 7;  % Absolute force threshold for contact detection
-    min_prominence = 4;   % Minimum peak prominence for findpeaks()
+    min_prominence = 4;
 
     % Identify contact start and end indices
     contact_mask = abs(normal_force) > force_threshold;
@@ -263,7 +223,6 @@ function [peak_indices, peak_values] = detect_contact_peaks(normal_force)
         [pos_peaks, pos_locs] = findpeaks(force_segment, 'MinPeakProminence', min_prominence);
         [neg_peaks, neg_locs] = findpeaks(-force_segment, 'MinPeakProminence', min_prominence);
 
-        % Combine positive and negative peaks
         all_peaks = [pos_peaks, -neg_peaks];  
         all_locs = [pos_locs, neg_locs];
 
@@ -282,10 +241,9 @@ function [peak_indices, peak_values] = detect_contact_peaks(normal_force)
     peak_values = peak_values(:); % Keep original sign
 end
 
-%% **Run Function**
+%%
+
 plot_all_contact_peaks({'cylinder', 'hexagon', 'oblong'}, {'PLA', 'rubber', 'TPU'});
-
-
 
 fprintf('Processing complete for all files.\n');
 

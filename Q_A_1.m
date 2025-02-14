@@ -1,21 +1,10 @@
 function plot_trajectories(shapes, materials)
-    % PLOT_TRAJECTORIES: Plots movement and force data for selected shapes.
-    % 
-    % INPUT:
-    %   shapes - Cell array of shape names (e.g., {'cylinder', 'hexagon', 'oblong'}).
-    %   materials - Array of which materials to plot for each given shape {'PLA', 'TPU', 'Rubber'}
-    %
-    % This function processes the selected shapes by loading corresponding .mat
-    % files, extracting the end effector pose and force data, and generating
-    % clear, readable plots.
 
-    % Data folder
     folder_path = fullfile(pwd, 'PR_CW_mat');
 
-    % empty list for selected files
+
     selected_files = {};
 
-    % Generate filenames dynamically based on shapes and materials
     for i = 1:length(shapes)
         shape = shapes{i};
         for j = 1:length(materials)
@@ -29,7 +18,6 @@ function plot_trajectories(shapes, materials)
         end
     end
 
-    % Process each selected file
     for i = 1:length(selected_files)
         file_path = fullfile(folder_path, selected_files{i});
         fprintf('Processing: %s\n', selected_files{i});
@@ -37,16 +25,14 @@ function plot_trajectories(shapes, materials)
     end
 end
 
-%% Function to Process Each File
+%% Function to process each file
 function process_file(file_path, file_name)
-    % PROCESS_FILE: Loads and processes movement/force data from a .mat file.
 
-    % Load the .mat file
     data = load(file_path);
 
     % Extract relevant data
-    poses = data.end_effector_poses;  % 6D end-effector position & orientation
-    ft_values = data.ft_values;       % Force/torque values
+    poses = data.end_effector_poses;
+    ft_values = data.ft_values;
     time = 1:size(poses,1);           % Use row number as time index
 
     % Generate plots
@@ -56,7 +42,7 @@ function process_file(file_path, file_name)
     plot_force_over_time(time, ft_values, file_name);
 end
 
-%% 3D Trajectory Plot Function
+%% 3D trajectory plot function
 function plot_trajectory_3D(poses, file_name)
     figure('Position', [100, 100, 1500, 500]);
     plot3(poses(:,1), poses(:,2), poses(:,3), 'b', 'LineWidth', 0.6);
@@ -67,7 +53,7 @@ function plot_trajectory_3D(poses, file_name)
     grid on; axis equal; view(3);
 end
 
-%% Position Over Time Plot Function
+%% Position over time plot function
 function plot_position_over_time(time, poses, file_name)
     figure('Position', [100, 100, 1500, 500]);
     labels = {'X Position', 'Y Position', 'Z Position'};
@@ -83,7 +69,7 @@ function plot_position_over_time(time, poses, file_name)
     end
 end
 
-%% Orientation Over Time Plot Function
+%% Orientation over time plot function
 function plot_orientation_over_time(time, poses, file_name)
     figure('Position', [100, 100, 1500, 500]);
     labels = {'Roll', 'Pitch', 'Yaw'};
@@ -99,7 +85,7 @@ function plot_orientation_over_time(time, poses, file_name)
     end
 end
 
-%% Force Over Time Plot Function
+%% Force over time plot function
 function plot_force_over_time(time, ft_values, file_name)
     figure('Position', [100, 100, 1500, 500]);
     labels = {'Force X (N)', 'Force Y (N)', 'Force Z (N)'};
@@ -116,27 +102,14 @@ function plot_force_over_time(time, ft_values, file_name)
 end
 
 function plot_3D_trajectories(shapes, materials)
-    % PLOT_3D_TRAJECTORIES: Plots 3D end effector trajectories for two shapes 
-    % and three materials in a single figure with six subplots.
-    %
-    % INPUT:
-    %   shapes - Cell array of two shape names (e.g., {'cylinder', 'hexagon'}).
-    %   materials - Cell array of three materials (e.g., {'TPU', 'rubber', 'papillarray'}).
-    %
-    % OUTPUT:
-    %   A single figure with six subplots, each showing the 3D trajectory of the end effector.
-    
     if length(shapes) ~= 2 || length(materials) ~= 3
         error('This function requires exactly two shapes and three materials.');
     end
 
-    % Data folder path
     folder_path = fullfile(pwd, 'PR_CW_mat');
 
-    % Create figure
     figure('Position', [100, 100, 1200, 800]);
     
-    % Loop over shapes and materials
     for i = 1:length(shapes)
         shape = shapes{i};
         for j = 1:length(materials)
@@ -151,12 +124,10 @@ function plot_3D_trajectories(shapes, materials)
             file_name = sprintf('%s_%spapillarray_single.mat', shape, material_prefix);
             file_path = fullfile(folder_path, file_name);
             
-            % Load data
             if exist(file_path, 'file')
                 data = load(file_path);
-                poses = data.end_effector_poses;  % Extract end effector positions
+                poses = data.end_effector_poses;
 
-                % Determine subplot index
                 subplot_idx = (i-1) * 3 + j;
                 
                 % Plot
@@ -177,5 +148,7 @@ function plot_3D_trajectories(shapes, materials)
         end
     end
 end
+
+%%
 
 plot_3D_trajectories({'cylinder', 'hexagon'}, {'PLA', 'rubber', 'TPU'});
