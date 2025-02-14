@@ -63,7 +63,7 @@ title('2D PCA Projection');
 grid on;
 hold off;
 
-%% Variance Explained by Principal Components
+%% PVE (proportion of variance explained) by Principal Components
 nexttile;
 bar(latent / sum(latent) * 100, 'FaceColor', [0.3, 0.3, 0.9]);
 xlabel('Principal Component'); ylabel('% Variance Explained');

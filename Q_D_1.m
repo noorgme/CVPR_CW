@@ -1,4 +1,4 @@
-%% 📌 Load Data for Hexagon Object (Central Papillae Only)
+%% Load Data
 clear; clc;
 
 % Load displacement data for three materials
@@ -16,21 +16,21 @@ normal_segments = normal_segments.peak_indices;
 TPU_segments = TPU_segments.peak_indices;
 rubber_segments = rubber_segments.peak_indices;
 
-%% 📌 Extract Displacement Values for Central Papillae (P4)
+%% Extract Displacement Values for Central Papillae (P4)
 pap_number = 4; % Central papillae index
 
 normal_disp = normal_data.sensor_matrices_displacement(normal_segments, (pap_number * 3) + (1:3));
 TPU_disp = TPU_data.sensor_matrices_displacement(TPU_segments, (pap_number * 3) + (1:3));
 rubber_disp = rubber_data.sensor_matrices_displacement(rubber_segments, (pap_number * 3) + (1:3));
 
-%% 📌 Combine Data & Labels
+%% Combine data and Normalise
+
 all_data = [normal_disp; TPU_disp; rubber_disp]; % Concatenating all material data
 % Normalise before clustering (z-score norm) 
 all_data = (all_data - mean(all_data)) ./ std(all_data);
-
 labels = [ones(size(normal_disp,1),1); 2*ones(size(TPU_disp,1),1); 3*ones(size(rubber_disp,1),1)]; % 1: PLA, 2: TPU, 3: Rubber
 
-%% (a) Scatter Plot for the 3 Materials (3D)
+%% (a) 3D Scatter plot for 3 materials
 figure;
 scatter3(normal_disp(:,1), normal_disp(:,2), normal_disp(:,3), 20, 'r', 'filled'); hold on;
 scatter3(TPU_disp(:,1), TPU_disp(:,2), TPU_disp(:,3), 20, 'g', 'filled');
@@ -42,10 +42,11 @@ grid on; view(45,30);
 hold off;
 
 %% (b) Apply K-means Clustering (Using 3D Data)
+
 k = 3; % We expect 3 clusters (one per material)
 [idx, C] = kmeans(all_data, k); % K-means clustering
 
-% 📌 3D Scatter Plot of Clusters
+% plot
 figure;
 scatter3(all_data(idx==1,1), all_data(idx==1,2), all_data(idx==1,3), 20, 'r', 'filled'); hold on;
 scatter3(all_data(idx==2,1), all_data(idx==2,2), all_data(idx==2,3), 20, 'g', 'filled');
@@ -57,7 +58,7 @@ legend({'Cluster 1', 'Cluster 2', 'Cluster 3', 'Centroids'}, 'Location', 'best')
 grid on; view(45,30);
 hold off;
 
-%% 📌 2D Projection of Clustering Results
+%% 2D Projection of clustering results
 figure;
 tiledlayout(1,3, 'TileSpacing', 'compact');
 
@@ -79,11 +80,11 @@ gscatter(all_data(:,2), all_data(:,3), idx, 'rgb', 'osd', 8);
 xlabel('D_Y (mm)'); ylabel('D_Z (mm)');
 title('Clusters: D_Y vs D_Z');
 
-%% (c) Apply K-means Clustering with a Different Distance Metric (Manhattan)
+%% Apply K-means Clustering with a different distance metric (Manhattan)
 opts = statset('MaxIter', 1000); % Ensure convergence
 [idx2, C2] = kmeans(all_data, k, 'Distance', 'cityblock', 'Options', opts); % Using Manhattan distance
 
-% 📌 3D Scatter Plot of New Clusters
+% 3D Scater Plot
 figure;
 scatter3(all_data(idx2==1,1), all_data(idx2==1,2), all_data(idx2==1,3), 20, 'r', 'filled'); hold on;
 scatter3(all_data(idx2==2,1), all_data(idx2==2,2), all_data(idx2==2,3), 20, 'g', 'filled');
@@ -95,7 +96,7 @@ legend({'Cluster 1', 'Cluster 2', 'Cluster 3', 'Centroids'}, 'Location', 'best')
 grid on; view(45,30);
 hold off;
 
-%% 📌 2D Projection of Manhattan Clustering
+%% 2D Projection of Manhattan Clustering
 figure;
 tiledlayout(1,3, 'TileSpacing', 'compact');
 

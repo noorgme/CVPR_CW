@@ -1,3 +1,4 @@
+%% Setup figure space
 figure('Units', 'normalized', 'Position', [0.1, 0.1, 0.9, 0.4]); 
 outerTL = tiledlayout(1,3, 'TileSpacing', 'compact', 'Padding', 'compact');
 
@@ -21,7 +22,6 @@ hold off;
 
 %% PCA 1D Number Lines
 
-% Create third tile and capture its position
 outerTile3 = nexttile(outerTL);
 tilePos = outerTile3.Position;  % get the position of this tile
 delete(outerTile3);             % remove the blank axes

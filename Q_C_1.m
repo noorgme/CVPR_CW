@@ -1,17 +1,13 @@
-%% (1) Load Data for Oblong TPU and Oblong Rubber
-clear; clc;
-
-% Load data for TPU and Rubber
+%% Load data for TPU and Rubber
 TPU_data = load("PR_CW_mat/oblong_TPU_papillarray_single.mat");
 rubber_data = load("PR_CW_mat/oblong_rubber_papillarray_single.mat");
 
-% Load contact segment indices for each material
 TPU_segments_struct = load("contact_segments/contact_peaks_cylinder_TPU_papillarray_single.mat");
 rubber_segments_struct = load("contact_segments/contact_peaks_cylinder_rubber_papillarray_single.mat");
 TPU_segments = TPU_segments_struct.peak_indices;
 rubber_segments = rubber_segments_struct.peak_indices;
 
-% Extract displacement values for central papillae (Papilla #4)
+% Extract displacement values for central papillae
 pap_number = 4;
 TPU_displacement = TPU_data.sensor_matrices_displacement(TPU_segments, (pap_number * 3) + (1:3));
 rubber_displacement = rubber_data.sensor_matrices_displacement(rubber_segments, (pap_number * 3) + (1:3));
@@ -22,10 +18,10 @@ all_data = [TPU_displacement; rubber_displacement];
 % Create Labels: 1 for TPU, 2 for Rubber
 labels = [ones(size(TPU_displacement, 1), 1); 2 * ones(size(rubber_displacement, 1), 1)];
 
-%% (2) Standardization (Z-score Normalization Per Feature)
+%% Standardise
 all_data = (all_data - mean(all_data,1)) ./ std(all_data,[],1);
 
-%% (3) 3D Scatter Plot of Central Papillae Displacement
+%% 3D Scatter Plot
 figure;
 scatter3(TPU_displacement(:,1), TPU_displacement(:,2), TPU_displacement(:,3), 15, 'g', 'filled'); hold on;
 scatter3(rubber_displacement(:,1), rubber_displacement(:,2), rubber_displacement(:,3), 15, 'b', 'filled');
@@ -36,7 +32,7 @@ grid on;
 view(45,30);
 hold off;
 
-%% (4) Apply LDA to Each 2D Combination and Plot with Decision Boundaries & LDA Direction
+%% LDA - 2D Plots with Decision Boundaries & LDA Direction
 combinations = [1 2; 1 3; 2 3];
 titles = {'LDA: D_X vs D_Y', 'LDA: D_X vs D_Z', 'LDA: D_Y vs D_Z'};
 xlabel_list = {'D_X (mm)', 'D_X (mm)', 'D_Y (mm)'};
@@ -71,7 +67,8 @@ for i = 1:3
     hold off;
 end
 
-%% (5) Compute LDA Projection (Following Fisher's LDA)
+%% LDA Computations
+
 % Compute Class Means
 mean_TPU = mean(all_data(labels == 1, :), 1);
 mean_rubber = mean(all_data(labels == 2, :), 1);
@@ -86,12 +83,12 @@ end
 diff_mean = (mean_TPU - mean_rubber)';
 S_B = (diff_mean * diff_mean');
 
-% Compute Eigenvectors
+% Eigenvectors
 [V, D] = eig(pinv(S_W) * S_B);
 [~, sorted_indices] = sort(diag(D), 'descend');
 W_LDA = V(:, sorted_indices(1:2)); % First two eigenvectors (LD1 & LD2)
 
-%% (6) Project Data Onto LD1 & LD2 for 2D Scatter Plot
+%% Project data onto LD1 and LD2 for 2D (reduced) plot
 lda_proj = all_data * W_LDA;
 
 % Compute Decision Boundary
@@ -110,7 +107,7 @@ legend({'TPU', 'Rubber', 'Decision Boundary'}, 'Location', 'best');
 grid on;
 hold off;
 
-%% (7) 3D Scatter Plot with LDA Discriminant Plane
+%% 3D Scatter Plot with LDA discriminant plane
 [grid_x, grid_y] = meshgrid(linspace(min(all_data(:,1)), max(all_data(:,1)), 10), ...
                             linspace(min(all_data(:,2)), max(all_data(:,2)), 10));
 coef_3D = W_LDA(:,1); % LDA discriminant
